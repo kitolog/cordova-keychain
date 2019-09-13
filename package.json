@@ -1,6 +1,6 @@
 {
   "name": "cordova-keychain",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Allows access to iOS KeyChain and Android Keystore from Cordova.",
   "cordova": {
     "id": "cordova-keychain",
