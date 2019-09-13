@@ -93,6 +93,7 @@ public final class KeyStorage
     /**
      * Encrypt the given string value using the public key from the Keystore
      *
+     * @throws IllegalArgumentException
      * @param value     The string to encrypt
      * @return          The encrypted string
      */
@@ -133,6 +134,7 @@ public final class KeyStorage
     /**
      * Decrypt the given string using the private key from the Keystore
      *
+     * @throws IllegalArgumentException
      * @param cipherText    The Encrypted string
      * @return              The Decrypted string
      */

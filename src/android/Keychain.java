@@ -105,7 +105,7 @@ public class Keychain extends CordovaPlugin
                     final String value = secureStorage.getValue(key);
                     callbackContext.success(value);
                 }
-                catch (IllegalStateException e)
+                catch (Exception e)
                 {
                     callbackContext.error(e.getMessage());
                 }
@@ -137,7 +137,7 @@ public class Keychain extends CordovaPlugin
                     secureStorage.setValue(key, value);
                     callbackContext.success();
                 }
-                catch (IllegalStateException e)
+                catch (Exception e)
                 {
                     callbackContext.error(e.getMessage());
                 }
@@ -167,8 +167,8 @@ public class Keychain extends CordovaPlugin
                             cordova.getActivity(), serviceName, encryptionRequired);
                     secureStorage.removeValue(key);
                     callbackContext.success();
-                    }
-                catch (IllegalStateException e)
+                }
+                catch (Exception e)
                 {
                     callbackContext.error(e.getMessage());
                 }
