@@ -1,7 +1,7 @@
 {
   "name": "cordova-plugin-keychain-storage",
   "version": "1.0.0",
-  "description": "Allows to keep data on install / uninstall",
+  "description": "Allows to keep data on install / uninstall or app updates",
   "cordova": {
     "id": "cordova-plugin-keychain-storage",
     "platforms": [

@@ -1,21 +1,17 @@
-Keychain Plugin for Apache Cordova
+Keychain storage Plugin for Apache Cordova
 =====================================
-created by David Williams (ADI Health) extending work by Shazron Abdullah (Copyright 2012) to include support for Android Keystore.
-Requires Android API level 18 (4.3) for Keystore support
 
-[Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html) except for the SFHFKeychainUtils code that is under **src/ios/SFHFKeychainUtils**
+Plugin helps to store data across app updates, install/uninstall processes on the device
+On iOS save in keychain
+On Android save in hidden file on external storage, stored values are encrypted
 
-Follows the [Cordova Plugin spec](http://cordova.apache.org/docs/en/3.0.0/plugin_ref_spec.md), so that it works with [Plugman](https://github.com/apache/cordova-plugman), or you can install it manually below.
- 
-Manually importing the plugin is not supported anymore, please use [Plugman](http://npmjs.org/plugman)     or the [Cordova CLI tool](http://npmjs.org/cordova)    
-
-The "Keychain" object definition is installed globally. 
+### Install
+`cordova plugin add cordova-plugin-keychain-storage`
 
 The plugin's JavaScript functions are called after creating the plugin object thus:
- 
+
         var kc = new Keychain();
         kc.getForKey(win, fail, "some_key", "some_servicename");
-
 ### iCloud keychain enabled
 
 iCloud keychain synchonizing is enabled, so the keychain will be mirrored across all devices *if* the user is signed in to iCloud (Settings > iCloud) and has iCloud keychain turned on (Settings > iCloud > Keychain)
@@ -96,3 +92,14 @@ kc.setForKey(successCallback, failureCallback, 'key', 'servicename', 'value');
  */
 kc.removeForKey(successCallback, failureCallback, 'key', 'servicename');
 ```
+
+based on plugins by David Williams (ADI Health) extending work by Shazron Abdullah (Copyright 2012) to include support for Android Keystore.
+Requires Android API level 18 (4.3) for Keystore support
+
+[Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html) except for the SFHFKeychainUtils code that is under **src/ios/SFHFKeychainUtils**
+
+Follows the [Cordova Plugin spec](http://cordova.apache.org/docs/en/3.0.0/plugin_ref_spec.md), so that it works with [Plugman](https://github.com/apache/cordova-plugman), or you can install it manually below.
+
+Manually importing the plugin is not supported anymore, please use [Plugman](http://npmjs.org/plugman)     or the [Cordova CLI tool](http://npmjs.org/cordova)
+
+The "Keychain" object definition is installed globally.

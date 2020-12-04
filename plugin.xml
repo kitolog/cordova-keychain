@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
-    id="com.adi.plugin.keychainutil"
-    version="0.0.1">
+    id="cordova-plugin-keychain-storage"
+    version="1.0.0">
 
-    <name>KeyChain Cordova Plugin</name>
-    <description>Allows access to iOS KeyChain and Android Keystore from Cordova.</description>
+    <name>Keychain storage Plugin for Cordova</name>
+    <description>Allows to keep data on install / uninstall or app updates.</description>
 
     <engines>
       <!-- <engine name="cordova" version=">=2.2.0" /> -->
