@@ -20,6 +20,18 @@ The plugin's JavaScript functions are called after creating the plugin object th
 
 iCloud keychain synchonizing is enabled, so the keychain will be mirrored across all devices *if* the user is signed in to iCloud (Settings > iCloud) and has iCloud keychain turned on (Settings > iCloud > Keychain)
 
+### Android API 29+ support
+Add android:requestLegacyExternalStorage="true" to <application tag in manifest
+
+<edit-config file="AndroidManifest.xml" mode="merge" target="/manifest/application">
+    <application android:requestLegacyExternalStorage="true" />
+</edit-config>
+
+And permissions:
+
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+
 ### Usage
         
 **Important:**
