@@ -1,49 +1,44 @@
 package com.adi.plugin;
 
+import android.app.Activity;
 import android.content.Context;
-import android.security.KeyPairGeneratorSpec;
+import android.content.SharedPreferences;
 import android.util.Base64;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.UnrecoverableEntryException;
 import java.security.cert.CertificateException;
-import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
-import java.util.Calendar;
 
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
-import javax.crypto.CipherOutputStream;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
-import javax.security.auth.x500.X500Principal;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 
 /**
  * Wrapper for Android Keystore Functionality
  */
 public final class KeyStorage
 {
-    private static final String TAG = KeyStorage.class.getSimpleName();
-    private static final String CIPHER_TYPE = "RSA/ECB/PKCS1Padding";
-    private static final String ANDROID_KEY_STORE = "AndroidKeyStore";
-    private static final String DISTINGUISHED_NAME = "CN=Sample Name, O=Android Authority";
-    private static final String RSA = "RSA";
+    private static final String AES_MODE = "AES/ECB/PKCS7Padding";
     private static final String UTF_8 = "UTF-8";
-    private static final int CERT_YEARS = 25;
+	private static final int AES_Key_Size = 128;
 
-    private final RSAPublicKey publicKey;
-    private final Key privateKey;
+    //private final RSAPublicKey publicKey;
+    //private final Key privateKey;
+
+	private final Context keyContext;
 
     /**
      * Constructor - checks if the given alias already exists and creates it if not.
@@ -56,44 +51,37 @@ public final class KeyStorage
             NoSuchAlgorithmException, IOException, NoSuchProviderException,
             InvalidAlgorithmParameterException, UnrecoverableEntryException
     {
-        final KeyStore keyStore = KeyStore.getInstance(ANDROID_KEY_STORE);
-        keyStore.load(null);
+    	keyContext = context;
 
-        if (!keyStore.containsAlias(alias))
+        SharedPreferences pref = context.getSharedPreferences("keychaindetails", Context.MODE_PRIVATE);
+        String enryptedKeyB64 = pref.getString("keychainKey", null);
+        if (enryptedKeyB64 == null)
         {
-            final Calendar start = Calendar.getInstance();
-            final Calendar end = Calendar.getInstance();
-            end.add(Calendar.YEAR, CERT_YEARS);
-            final KeyPairGeneratorSpec.Builder builder = new KeyPairGeneratorSpec.Builder(context)
-                    .setAlias(alias)
-                    .setSubject(new X500Principal(DISTINGUISHED_NAME))
-                    .setSerialNumber(BigInteger.ONE)
-                    .setStartDate(start.getTime())
-                    .setEndDate(end.getTime());
-            if (encryptionRequired)
-            {
-                builder.setEncryptionRequired();
-            }
-            final KeyPairGeneratorSpec spec = builder.build();
-            final KeyPairGenerator generator = KeyPairGenerator.getInstance(RSA, ANDROID_KEY_STORE);
-            generator.initialize(spec);
+			KeyGenerator kgen = KeyGenerator.getInstance("AES");
+			kgen.init(AES_Key_Size);
+			SecretKey key = kgen.generateKey();
+			byte[] aesKey = key.getEncoded();
 
-            final KeyPair keyPair = generator.generateKeyPair();
-            publicKey = (RSAPublicKey)keyPair.getPublic();
-            privateKey = keyPair.getPrivate();
+			enryptedKeyB64 = Base64.encodeToString(aesKey, Base64.DEFAULT);
+			SharedPreferences.Editor edit = pref.edit();
+			edit.putString("keychainKey", enryptedKeyB64);
+			edit.apply();
         }
-        else
-        {
-            final KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry) keyStore.getEntry(alias, null);
-            publicKey = (RSAPublicKey) privateKeyEntry.getCertificate().getPublicKey();
-            privateKey = privateKeyEntry.getPrivateKey();
-        }
+    }
+
+    private Key getSecretKey(Context context) throws Exception
+    {
+        SharedPreferences pref = context.getSharedPreferences("keychaindetails", Context.MODE_PRIVATE);
+        String enryptedKeyB64 = pref.getString("keychainKey", null);
+
+        // need to check null, omitted here
+        byte[] encryptedKey = Base64.decode(enryptedKeyB64, Base64.DEFAULT);
+        return new SecretKeySpec(encryptedKey, "AES");
     }
 
     /**
      * Encrypt the given string value using the public key from the Keystore
      *
-     * @throws IllegalArgumentException
      * @param value     The string to encrypt
      * @return          The encrypted string
      */
@@ -101,17 +89,12 @@ public final class KeyStorage
     {
         try
         {
-            final Cipher inCipher = Cipher.getInstance(CIPHER_TYPE);
-            inCipher.init(Cipher.ENCRYPT_MODE, publicKey);
+            final Cipher inCipher = Cipher.getInstance(AES_MODE);
+            inCipher.init(Cipher.ENCRYPT_MODE, getSecretKey(keyContext));
 
-            final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            final CipherOutputStream cipherOutputStream = new CipherOutputStream(
-                    outputStream, inCipher);
-            cipherOutputStream.write(value.getBytes(UTF_8));
-            cipherOutputStream.close();
+            byte[] cipherText = inCipher.doFinal(value.getBytes("UTF-8"));
 
-            final byte[] vals = outputStream.toByteArray();
-            return Base64.encodeToString(vals, Base64.DEFAULT);
+            return Base64.encodeToString(cipherText, Base64.DEFAULT);
         }
         catch(NoSuchPaddingException e)
         {
@@ -129,12 +112,23 @@ public final class KeyStorage
         {
             throw new IllegalArgumentException(e);
         }
+        catch(BadPaddingException e)
+        {
+        	throw new IllegalArgumentException(e);
+        }
+        catch(IllegalBlockSizeException e)
+        {
+        	throw new IllegalArgumentException(e);
+        }
+        catch(Exception e)
+        {
+        	throw new IllegalArgumentException(e);
+        }
     }
 
     /**
      * Decrypt the given string using the private key from the Keystore
      *
-     * @throws IllegalArgumentException
      * @param cipherText    The Encrypted string
      * @return              The Decrypted string
      */
@@ -142,8 +136,8 @@ public final class KeyStorage
     {
         try
         {
-            Cipher output = Cipher.getInstance(CIPHER_TYPE);
-            output.init(Cipher.DECRYPT_MODE, privateKey);
+            Cipher output = Cipher.getInstance(AES_MODE);
+            output.init(Cipher.DECRYPT_MODE, getSecretKey(keyContext));
 
             CipherInputStream cipherInputStream = new CipherInputStream(
                     new ByteArrayInputStream(Base64.decode(cipherText, Base64.DEFAULT)), output);
@@ -177,6 +171,10 @@ public final class KeyStorage
         catch(IOException e)
         {
             throw new IllegalArgumentException(e);
+        }
+        catch(Exception e)
+        {
+        	throw new IllegalArgumentException(e);
         }
     }
 }

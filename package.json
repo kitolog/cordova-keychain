@@ -1,9 +1,9 @@
 {
-  "name": "cordova-keychain",
-  "version": "0.0.9",
-  "description": "Allows access to iOS KeyChain and Android Keystore from Cordova.",
+  "name": "cordova-plugin-keychain-storage",
+  "version": "1.0.0",
+  "description": "Allows to keep data on install / uninstall",
   "cordova": {
-    "id": "cordova-keychain",
+    "id": "cordova-plugin-keychain-storage",
     "platforms": [
       "android",
       "ios"
@@ -14,7 +14,11 @@
     "ecosystem:cordova",
     "cordova-android",
     "cordova-ios",
-    "keychain"
+    "keychain",
+    "keychain storage",
+    "uninstall",
+    "install",
+    "keep data"
   ],
   "engines": [
     {
@@ -32,6 +36,9 @@
     },
     {
       "name": "Shazron Abdullah"
+    },
+    {
+      "name": "kitolog"
     }
   ],
   "license": "Apache-2.0"

@@ -1,11 +1,15 @@
 package com.adi.plugin;
 
+import android.Manifest;
+import android.app.Activity;
+import android.content.pm.PackageManager;
 import android.util.Log;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CordovaWebView;
+import org.apache.cordova.PermissionHelper;
 import org.json.JSONArray;
 import org.json.JSONException;
 
@@ -40,6 +44,17 @@ public class Keychain extends CordovaPlugin
         Log.v(TAG, "Init KeyChain");
     }
 
+    public static final String READ_EXTERNAL_STORAGE = Manifest.permission.READ_EXTERNAL_STORAGE;
+    public static final String WRITE_EXTERNAL_STORAGE = Manifest.permission.WRITE_EXTERNAL_STORAGE;
+
+    protected void getReadPermission(int requestCode) {
+        PermissionHelper.requestPermission(this, requestCode, READ_EXTERNAL_STORAGE);
+    }
+
+    protected void getWritePermission(int requestCode) {
+        PermissionHelper.requestPermission(this, requestCode, WRITE_EXTERNAL_STORAGE);
+    }
+
     /**
      *
      * @param action          The action to execute.
@@ -57,6 +72,7 @@ public class Keychain extends CordovaPlugin
 
         if (GET_VALUE.equals(action))
         {
+            getReadPermission(0);
             final String key = args.getString(0);
             final String service = args.getString(1);
             final boolean encryptionRequired = args.length() == 2 || TRUE.equals(args.getString(2));
@@ -65,6 +81,7 @@ public class Keychain extends CordovaPlugin
         }
         else if (SET_VALUE.equals(action))
         {
+            getWritePermission(0);
             final String key = args.getString(0);
             final String service = args.getString(1);
             final String value = args.getString(2);
@@ -107,7 +124,8 @@ public class Keychain extends CordovaPlugin
                     final String value = secureStorage.getValue(key);
                     callbackContext.success(value);
                 }
-                catch (Exception e)
+//                 catch (Exception e)
+                catch (IllegalStateException e)
                 {
                     callbackContext.error(e.getMessage());
                 }
@@ -139,7 +157,8 @@ public class Keychain extends CordovaPlugin
                     secureStorage.setValue(key, value);
                     callbackContext.success();
                 }
-                catch (Exception e)
+//                 catch (Exception e)
+                catch (IllegalStateException e)
                 {
                     callbackContext.error(e.getMessage());
                 }
@@ -170,7 +189,8 @@ public class Keychain extends CordovaPlugin
                     secureStorage.removeValue(key);
                     callbackContext.success();
                 }
-                catch (Exception e)
+//                 catch (Exception e)
+                catch (IllegalStateException e)
                 {
                     callbackContext.error(e.getMessage());
                 }
