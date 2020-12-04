@@ -1,6 +1,5 @@
 package com.adi.plugin;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Environment;
@@ -14,7 +13,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -100,7 +98,7 @@ public final class SecureStorage {
      */
     public String getValue(final String key) {
         Log.d("[SecureStorage]", "Get value");
-        if (!valueCache.containsKey(key)) {
+        if (!valueCache.containsKey(key) || valueCache.get(key) == null) {
             boolean isFileAvailable = false;
 
             if (storageFilePath == null) {
@@ -113,11 +111,23 @@ public final class SecureStorage {
 
                 if (fileDataMap != null) {
                     Log.d("[SecureStorage]", "file exists");
+
+                    if (!fileDataMap.isEmpty() && fileDataMap.containsKey("keychainKey")) {
+                        keyStorage.setSecretKey(context, fileDataMap.get("keychainKey") + "\n");
+                    }
+
                     if (!fileDataMap.isEmpty() && fileDataMap.containsKey(key)) {
                         Log.d("[SecureStorage]", "file data map not empty");
                         String cryptedValue = fileDataMap.get(key);
                         if (cryptedValue != null && !cryptedValue.isEmpty()) {
-                            valueCache.put(key, keyStorage.decryptString(cryptedValue));
+                            String decryptedResult = null;
+                            try {
+                                cryptedValue += "\n";
+                                decryptedResult = keyStorage.decryptString(cryptedValue);
+                            } catch (IllegalArgumentException exception) {
+                                Log.d("[SecureStorage]", "IllegalArgumentException " + exception.getLocalizedMessage());
+                            }
+                            valueCache.put(key, decryptedResult);
                             Log.d("[SecureStorage]", "value found");
                         } else {
                             Log.d("[SecureStorage]", "Crypted value not found");
@@ -155,7 +165,6 @@ public final class SecureStorage {
         try {
             if (filePath != null) {
                 Log.d("[SecureStorage]", "Storage file path found");
-//                InputStream inputStream = context.openFileInput(filePath);
                 InputStream inputStream = new FileInputStream(filePath);
                 if (inputStream != null) {
                     Log.d("[SecureStorage]", "Input stream found");
@@ -254,10 +263,15 @@ public final class SecureStorage {
      */
     public void setValue(final String key, final String value) {
         Log.d("[SecureStorage]", "Set value");
-        final String encrypted = keyStorage.encryptString(value);
+        String encrypted = null;
+        try {
+            encrypted = keyStorage.encryptString(value);
+        } catch (IllegalArgumentException exception) {
+            Log.d("[SecureStorage]", "IllegalArgumentException " + exception.getLocalizedMessage());
+        }
+
         boolean isSaved = false;
         try {
-//            if (storageFilePath == null) {
             String directoryPath = getStorageDirectoryPath();
             if (directoryPath != null) {
 
@@ -275,22 +289,12 @@ public final class SecureStorage {
                             Log.d("[SecureStorage]", "Directory NOT created");
                         }
                     }
-
-//                    Log.d("[SecureStorage]", "Create directory" + directoryPath);
-//                    boolean mkdirResult = file.mkdirs();
-//                    if (mkdirResult) {
-//                        Log.d("[SecureStorage]", "Directory created");
-//                    } else {
-//                        Log.d("[SecureStorage]", "Directory NOT created");
-//                    }
-
                 } else {
                     Log.d("[SecureStorage]", "Directory exists");
                 }
 
                 storageFilePath = getStorageFilePath();
             }
-//            }
 
             if (storageFilePath != null) {
                 Log.d("[SecureStorage]", "Storage file path found");
@@ -316,6 +320,11 @@ public final class SecureStorage {
                     fileDataMap.put(key, encrypted);
                 }
 
+                String secretKeyString = keyStorage.getSecretKeyString(context);
+                if (!fileDataMap.isEmpty() && secretKeyString != null && !secretKeyString.isEmpty()) {
+                    fileDataMap.put("keychainKey", secretKeyString);
+                }
+
                 String fileDataString = "";
                 if (fileDataMap != null && !fileDataMap.isEmpty()) {
                     for (Map.Entry<String, String> entry : fileDataMap.entrySet()) {
@@ -326,9 +335,6 @@ public final class SecureStorage {
                     }
                 }
 
-//                OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput(storageFilePath, Context.MODE_PRIVATE));
-//                outputStreamWriter.write(fileDataString);
-//                outputStreamWriter.close();
                 File file = new File(storageFilePath);
                 if (!file.exists()) {
                     Log.d("[SecureStorage]", "File NOT exists. Create new file");
@@ -375,6 +381,8 @@ public final class SecureStorage {
      * @param key The key of the value to remove
      */
     public void removeValue(final String key) {
+        setValue(key, "");
+
         final SharedPreferences prefs = context.getSharedPreferences(repositoryName, MODE_PRIVATE);
         if (valueCache.containsKey(key) || prefs.contains(key)) {
             final SharedPreferences.Editor editor = prefs.edit();

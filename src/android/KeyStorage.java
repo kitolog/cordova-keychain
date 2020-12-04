@@ -31,7 +31,7 @@ import javax.crypto.spec.SecretKeySpec;
  */
 public final class KeyStorage
 {
-    private static final String AES_MODE = "AES/ECB/PKCS7Padding";
+    private static final String AES_MODE = "AES/ECB/PKCS5Padding";
     private static final String UTF_8 = "UTF-8";
 	private static final int AES_Key_Size = 128;
 
@@ -77,6 +77,21 @@ public final class KeyStorage
         // need to check null, omitted here
         byte[] encryptedKey = Base64.decode(enryptedKeyB64, Base64.DEFAULT);
         return new SecretKeySpec(encryptedKey, "AES");
+    }
+
+    public String getSecretKeyString(Context context)
+    {
+        SharedPreferences pref = context.getSharedPreferences("keychaindetails", Context.MODE_PRIVATE);
+        String enryptedKeyB64 = pref.getString("keychainKey", null);
+        return enryptedKeyB64;
+    }
+
+    public void setSecretKey(Context context, String key)
+    {
+        SharedPreferences pref = context.getSharedPreferences("keychaindetails", Context.MODE_PRIVATE);
+        SharedPreferences.Editor edit = pref.edit();
+        edit.putString("keychainKey", key);
+        edit.apply();
     }
 
     /**
