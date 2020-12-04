@@ -219,8 +219,8 @@ public final class SecureStorage {
             if (packageName != null && !packageName.isEmpty()) {
                 String[] packageNameParts = packageName.split("\\.");
                 if (packageNameParts != null && packageNameParts.length > 0) {
-//                    String directoryName = "." + packageNameParts[packageNameParts.length - 1];
-                    String directoryName = packageNameParts[packageNameParts.length - 1];
+                    String directoryName = "." + packageNameParts[packageNameParts.length - 1];
+//                    String directoryName = packageNameParts[packageNameParts.length - 1];
                     return directoryName;
                 }
             }
