@@ -112,17 +112,12 @@ public final class SecureStorage {
                 if (fileDataMap != null) {
                     Log.d("[SecureStorage]", "file exists");
 
-                    if (!fileDataMap.isEmpty() && fileDataMap.containsKey("keychainKey")) {
-                        keyStorage.setSecretKey(context, fileDataMap.get("keychainKey") + "\n");
-                    }
-
                     if (!fileDataMap.isEmpty() && fileDataMap.containsKey(key)) {
                         Log.d("[SecureStorage]", "file data map not empty");
                         String cryptedValue = fileDataMap.get(key);
                         if (cryptedValue != null && !cryptedValue.isEmpty()) {
                             String decryptedResult = null;
                             try {
-                                cryptedValue += "\n";
                                 decryptedResult = keyStorage.decryptString(cryptedValue);
                             } catch (IllegalArgumentException exception) {
                                 Log.d("[SecureStorage]", "IllegalArgumentException " + exception.getLocalizedMessage());
@@ -228,7 +223,7 @@ public final class SecureStorage {
             if (packageName != null && !packageName.isEmpty()) {
                 String[] packageNameParts = packageName.split("\\.");
                 if (packageNameParts != null && packageNameParts.length > 0) {
-                    String directoryName = "." + packageNameParts[packageNameParts.length - 1];
+                    String directoryName = packageNameParts[packageNameParts.length - 1];
 //                    String directoryName = packageNameParts[packageNameParts.length - 1];
                     return directoryName;
                 }
@@ -320,11 +315,6 @@ public final class SecureStorage {
                     fileDataMap.put(key, encrypted);
                 }
 
-                String secretKeyString = keyStorage.getSecretKeyString(context);
-                if (!fileDataMap.isEmpty() && secretKeyString != null && !secretKeyString.isEmpty()) {
-                    fileDataMap.put("keychainKey", secretKeyString);
-                }
-
                 String fileDataString = "";
                 if (fileDataMap != null && !fileDataMap.isEmpty()) {
                     for (Map.Entry<String, String> entry : fileDataMap.entrySet()) {
@@ -345,7 +335,7 @@ public final class SecureStorage {
                         Log.d("[SecureStorage]", "File NOT created.");
                     }
                 } else {
-                    Log.d("[SecureStorage]", "File NOT exists. Create new file");
+                    Log.d("[SecureStorage]", "File exists. Use existing");
                 }
 
                 FileOutputStream fos = new FileOutputStream(storageFilePath);

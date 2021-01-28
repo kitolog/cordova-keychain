@@ -1,27 +1,27 @@
 package com.adi.plugin;
 
-import android.app.Activity;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.util.Base64;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyStoreException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.UnrecoverableEntryException;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -31,12 +31,10 @@ import javax.crypto.spec.SecretKeySpec;
  */
 public final class KeyStorage
 {
+
     private static final String AES_MODE = "AES/ECB/PKCS5Padding";
     private static final String UTF_8 = "UTF-8";
 	private static final int AES_Key_Size = 128;
-
-    //private final RSAPublicKey publicKey;
-    //private final Key privateKey;
 
 	private final Context keyContext;
 
@@ -53,45 +51,49 @@ public final class KeyStorage
     {
     	keyContext = context;
 
-        SharedPreferences pref = context.getSharedPreferences("keychaindetails", Context.MODE_PRIVATE);
-        String enryptedKeyB64 = pref.getString("keychainKey", null);
-        if (enryptedKeyB64 == null)
-        {
-			KeyGenerator kgen = KeyGenerator.getInstance("AES");
-			kgen.init(AES_Key_Size);
-			SecretKey key = kgen.generateKey();
-			byte[] aesKey = key.getEncoded();
+        try {
+            String myKey = "myappsecretkey";
+            byte[] key = myKey.getBytes("UTF-8");
+            MessageDigest sha = MessageDigest.getInstance("SHA-1");
+            key = sha.digest(key);
+            key = Arrays.copyOf(key, 16);
 
-			enryptedKeyB64 = Base64.encodeToString(aesKey, Base64.DEFAULT);
-			SharedPreferences.Editor edit = pref.edit();
-			edit.putString("keychainKey", enryptedKeyB64);
-			edit.apply();
+            System.out.println(new String(key,"UTF-8"));
+            SecretKeySpec secretKey = new SecretKeySpec(key, "AES");
+
+            byte[] aesKey = secretKey.getEncoded();
+            String enryptedKeyB64 = Base64.encodeToString(aesKey, Base64.DEFAULT);
+        } catch (NoSuchAlgorithmException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
     }
 
     private Key getSecretKey(Context context) throws Exception
     {
-        SharedPreferences pref = context.getSharedPreferences("keychaindetails", Context.MODE_PRIVATE);
-        String enryptedKeyB64 = pref.getString("keychainKey", null);
+        try {
+            String myKey = "myappsecretkey";
+            byte[] key = myKey.getBytes("UTF-8");
+            MessageDigest sha = MessageDigest.getInstance("SHA-1");
+            key = sha.digest(key);
+            key = Arrays.copyOf(key, 16);
 
-        // need to check null, omitted here
-        byte[] encryptedKey = Base64.decode(enryptedKeyB64, Base64.DEFAULT);
-        return new SecretKeySpec(encryptedKey, "AES");
-    }
+            System.out.println(new String(key,"UTF-8"));
+            SecretKeySpec secretKey = new SecretKeySpec(key, "AES");
 
-    public String getSecretKeyString(Context context)
-    {
-        SharedPreferences pref = context.getSharedPreferences("keychaindetails", Context.MODE_PRIVATE);
-        String enryptedKeyB64 = pref.getString("keychainKey", null);
-        return enryptedKeyB64;
-    }
+            return secretKey;
+        } catch (NoSuchAlgorithmException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
 
-    public void setSecretKey(Context context, String key)
-    {
-        SharedPreferences pref = context.getSharedPreferences("keychaindetails", Context.MODE_PRIVATE);
-        SharedPreferences.Editor edit = pref.edit();
-        edit.putString("keychainKey", key);
-        edit.apply();
+        return null;
     }
 
     /**
@@ -109,7 +111,7 @@ public final class KeyStorage
 
             byte[] cipherText = inCipher.doFinal(value.getBytes("UTF-8"));
 
-            return Base64.encodeToString(cipherText, Base64.DEFAULT);
+            return Base64.encodeToString(cipherText, Base64.NO_WRAP);
         }
         catch(NoSuchPaddingException e)
         {
@@ -155,7 +157,7 @@ public final class KeyStorage
             output.init(Cipher.DECRYPT_MODE, getSecretKey(keyContext));
 
             CipherInputStream cipherInputStream = new CipherInputStream(
-                    new ByteArrayInputStream(Base64.decode(cipherText, Base64.DEFAULT)), output);
+                    new ByteArrayInputStream(Base64.decode(cipherText, Base64.NO_WRAP)), output);
             ArrayList<Byte> values = new ArrayList<Byte>();
             int nextByte;
             while ((nextByte = cipherInputStream.read()) != -1)
