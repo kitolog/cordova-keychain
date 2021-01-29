@@ -26,7 +26,7 @@ public class Keychain extends CordovaPlugin {
     private static final String SET_VALUE = "setForKey";
     private static final String REMOVE_VALUE = "removeForKey";
     private static final String TRUE = "true";
-    private String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+    private String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE};
 
     public Keychain() {
     }

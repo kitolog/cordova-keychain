@@ -257,12 +257,13 @@ public final class SecureStorage {
      * @param value The value to set
      */
     public void setValue(final String key, final String value) {
-        Log.d("[SecureStorage]", "Set value");
+        Log.d("[SecureStorage]", "Set value for key " + key);
         String encrypted = null;
         try {
             encrypted = keyStorage.encryptString(value);
+            Log.d("[SecureStorage]", "Value encrypted for key " + key);
         } catch (IllegalArgumentException exception) {
-            Log.d("[SecureStorage]", "IllegalArgumentException " + exception.getLocalizedMessage());
+            Log.d("[SecureStorage]", "Key "+key +" IllegalArgumentException " + exception.getLocalizedMessage());
         }
 
         boolean isSaved = false;
@@ -343,14 +344,14 @@ public final class SecureStorage {
                 fos.flush();
                 fos.close();
                 isSaved = true;
-                Log.d("[SecureStorage]", "Saved");
+                Log.d("[SecureStorage]", "Saved for key " + key);
             } else {
-                Log.d("[SecureStorage]", "Storage file path NOT found");
+                Log.d("[SecureStorage]", "Storage file path NOT found key " + key);
             }
 
         } catch (IOException exception) {
             exception.printStackTrace();
-            Log.d("[SecureStorage]", "Can not read file: " + exception.getLocalizedMessage());
+            Log.d("[SecureStorage]", "Can not read file key "+key+": " + exception.getLocalizedMessage());
         }
 
         if (!isSaved) {
